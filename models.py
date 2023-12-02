@@ -4,9 +4,21 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 class CustomClassifier(tf.keras.Model):
-    def __init__(self, num_classes: int = 2):
+    def __init__(self, num_classes: int = 2, apply_augmentation: bool = False):
         super().__init__()
+
+        self.apply_augmentation = apply_augmentation
         
+        if apply_augmentation:
+            self.aug = tf.keras.Sequential(
+                tf.keras.layers.RandomFlip("horizontal"),
+                tf.keras.layers.RandomRotation(0.2),
+                tf.keras.layers.GaussianNoise(),
+                tf.keras.layers.RandomBrightness(0.2),
+                tf.keras.layers.RandomContrast(0.2),
+                tf.keras.layers.
+            )
+
         self.cnn = tf.keras.Sequential([
             tf.keras.layers.Conv2D(32, 3, activation='relu'),
             tf.keras.layers.MaxPooling2D(),
@@ -20,6 +32,8 @@ class CustomClassifier(tf.keras.Model):
         ])
     
     def call(self, x: tf.Tensor) -> tf.Tensor:
+        if self.apply_augmentation:
+            x = self.aug(x)
         x = self.cnn(x)
         return x
 
