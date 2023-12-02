@@ -73,3 +73,23 @@ def data_analysis(args: Namespace):
   figpath = os.path.join(".", "figs", "dogs.png")
   plt.savefig(figpath, format= "png")
   plt.close()
+
+  #show augmented images
+  aug = tf.keras.Sequential([
+          tf.keras.layers.RandomFlip("horizontal"),
+          tf.keras.layers.GaussianNoise(0.1),
+          tf.keras.layers.RandomBrightness(0.2),
+          tf.keras.layers.RandomContrast(0.2)
+        ])
+
+  aug_ds = dogs_ds.map(lambda x, y: (aug(x, training=True), y))
+  i=0
+  for images, labels in aug_ds.take(9):
+    ax = plt.subplot(3, 3, i + 1)
+    plt.imshow(images[0].numpy().astype("uint8"))
+    #plt.title(class_names[labels[0]])
+    plt.axis("off")
+    i+=1
+  figpath = os.path.join(".", "figs", "aug_dogs.png")
+  plt.savefig(figpath, format= "png")
+  plt.close()

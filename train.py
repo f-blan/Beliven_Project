@@ -36,7 +36,7 @@ def train(args: Namespace):
 
     # INSTANTIATE MODEL
 
-    model = CustomClassifier()
+    model = CustomClassifier(apply_augmentation=args.use_augmentation)
     
     #choose optimizer and loss
     model.compile(
