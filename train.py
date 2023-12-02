@@ -1,11 +1,11 @@
 from argparse import Namespace
 import tensorflow as tf
 import tensorflow_datasets as tfds
-import PIL
+import os
 import PIL.Image
 import pathlib
 from models import CustomClassifier
-
+import matplotlib.pyplot as plt
 
 def train(args: Namespace):
     
@@ -40,12 +40,50 @@ def train(args: Namespace):
     
     #choose optimizer and loss
     model.compile(
-        optimizer='adam',
-        loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+        optimizer=tf.keras.optimizers.Adam(learning_rate = args.lr),
+        loss=tf.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy'])
 
-    model.fit(
+    plateau_callback = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.2,
+                              patience=3, min_lr=0.00001)
+
+    history= model.fit(
         train_ds,
         validation_data=val_ds,
-        epochs=args.n_epochs
+        epochs=args.n_epochs,
+        callbacks=[plateau_callback]
     )
+
+    acc = history.history['accuracy']
+    val_acc = history.history['val_accuracy']
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+    lr = history.history['lr']
+
+    epochs = range(1, len(acc) + 1)
+
+    plt.plot(epochs, acc, 'bo', label='Training acc')
+    plt.plot(epochs, val_acc, 'b', label='Validation acc')
+    plt.title('Training and validation accuracy')
+    plt.legend()
+
+    figpath = os.path.join(".", "figs", "accuracy_history.png")
+    plt.savefig(figpath, format= "png")
+    plt.close()
+
+    plt.plot(epochs, loss, 'bo', label='Training loss')
+    plt.plot(epochs, val_loss, 'b', label='Validation loss')
+    plt.title('Training and validation loss')
+    plt.legend()
+
+    figpath = os.path.join(".", "figs", "loss_history.png")
+    plt.savefig(figpath, format= "png")
+    plt.close()
+
+    plt.plot(epochs, lr, 'bo', label='Learning rate')
+    plt.title('Training and validation loss')
+    plt.legend()
+
+    figpath = os.path.join(".", "figs", "lr_history.png")
+    plt.savefig(figpath, format= "png")
+    plt.close()

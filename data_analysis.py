@@ -5,6 +5,7 @@ import PIL.Image
 import matplotlib.pyplot as plt
 import pathlib
 from argparse import Namespace
+import os
 
 def data_analysis(args: Namespace):
   train_dir = pathlib.Path(args.train_dir)
@@ -31,7 +32,9 @@ def data_analysis(args: Namespace):
   plt.xlabel("width")
   plt.ylabel("height")
   plt.title("Image sizes")
-  plt.show()
+  figpath = os.path.join(".", "figs", "scatter.png")
+  plt.savefig(figpath, format= "png")
+  plt.close()
 
 
   #visualize some of the pictures
@@ -54,7 +57,9 @@ def data_analysis(args: Namespace):
     plt.imshow(images[0].numpy().astype("uint8"))
     plt.axis("off")
     i+=1
-  plt.show()
+  figpath = os.path.join(".", "figs", "cats.png")
+  plt.savefig(figpath, format= "png")
+  plt.close()
 
   #show dog images
   dogs_ds = train_ds.filter(lambda imgs, labels: tf.math.equal(labels[0], 1))
@@ -65,4 +70,6 @@ def data_analysis(args: Namespace):
     #plt.title(class_names[labels[0]])
     plt.axis("off")
     i+=1
-  plt.show()
+  figpath = os.path.join(".", "figs", "dogs.png")
+  plt.savefig(figpath, format= "png")
+  plt.close()
