@@ -4,12 +4,14 @@ import tensorflow_datasets as tfds
 import os
 import PIL.Image
 import pathlib
-from models import CustomClassifier
+from models import CustomClassifier, ResnetClassifier
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 def train(args: Namespace):
     
     train_dir = pathlib.Path(args.train_dir)
+    test_dir = pathlib.Path(args.test_dir)
 
     # PREPARE THE DATASETS
     train_ds = tf.keras.utils.image_dataset_from_directory(
@@ -28,6 +30,12 @@ def train(args: Namespace):
         image_size=(args.crop_size, args.crop_size),
         batch_size=args.batch_size)
     
+    test_ds = tf.keras.utils.image_dataset_from_directory(
+        test_dir,
+        seed=123,
+        image_size=(args.crop_size, args.crop_size),
+        batch_size=args.batch_size)
+    
     rescaling_norm = tf.keras.layers.Rescaling(1./255)
 
     #normalize in range [0,1]
@@ -36,7 +44,7 @@ def train(args: Namespace):
 
     # INSTANTIATE MODEL
 
-    model = CustomClassifier(apply_augmentation=args.use_augmentation)
+    model = CustomClassifier(apply_augmentation=args.use_augmentation) if args.model == "custom" else ResnetClassifier(apply_augmentation=args.use_augmentation)
     
     #choose optimizer and loss
     model.compile(
@@ -87,3 +95,32 @@ def train(args: Namespace):
     figpath = os.path.join(".", "figs", "lr_history.png")
     plt.savefig(figpath, format= "png")
     plt.close()
+
+    print("performing inference on the test set")
+    x, y = test_ds 
+    preds = model.predict(x, training=False)
+
+    acc = tf.keras.metrics.Accuracy()
+    acc = acc.update_state(preds,y)
+
+    f1 = tf.keras.metrics.F1Score(num_classes=2)
+    f1 = f1.update_state(preds, y)
+
+    recall = tf.keras.metrics.Recall()
+    recall = recall.update_state(preds, y)
+
+    precision = tf.keras.metrics.Precision()
+    precision = precision.update_state(preds, y)
+
+    print("accuracy: ", acc.result().numpy())
+    print("f1: ", f1.result().numpy())
+    print("recall: ", recall.result().numpy())
+    print("precision: ", precision.result().numpy())
+
+    cm=confusion_matrix(y, preds, ["cats", "dogs"],)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=model.classes_)
+    disp.plot()
+    figpath = os.path.join(".", "figs", "confusion.png")
+    plt.savefig(figpath, format= "png")
+    plt.close()
+    
