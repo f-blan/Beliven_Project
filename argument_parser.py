@@ -17,7 +17,7 @@ def parse_arguments(args_list: List[str]) -> Namespace:
     parser.add_argument("--n_epochs", default = 12, type=int, help="number of epochs for training")
     parser.add_argument("--lr", type=float, default = 0.0001, help="initial value for learning rate")
     parser.add_argument("--use_augmentation", action="store_true", help=("apply data augmentation during training"))
-    parser.add_argument("--model", choices=["curstom", "resnet"], default="resnet", help="choose classifier model")
+    parser.add_argument("--model", choices=["custom", "resnet"], default="resnet", help="choose classifier model")
 
     parser.add_argument("--ds_folder", default = os.path.join(".", "dataset"), help="folder containing the dataset (should be already divided into training and testing)")
 

@@ -1,8 +1,9 @@
 import tensorflow as tf
 import numpy as np
+from typing import Tuple
 
 class CustomClassifier(tf.keras.Model):
-    def __init__(self, num_classes: int = 2, apply_augmentation: bool = False):
+    def __init__(self, num_classes: int = 2, apply_augmentation: bool = False, crop_size:int=256):
         super().__init__()
 
         self.apply_augmentation = apply_augmentation
@@ -32,8 +33,25 @@ class CustomClassifier(tf.keras.Model):
         x = self.cnn(x)
         return x
 
+def make_resnet(input_shape:Tuple[int,int,int]=(256,256,3), num_classes:int =2):
+  base_model = tf.keras.applications.resnet50.ResNet50(
+                include_top=False,
+                weights='imagenet',
+                input_shape=input_shape
+            )
+  
+  for layer in base_model.layers:
+    layer.trainable = False
+
+  x = tf.keras.layers.Flatten()(base_model.output)
+  x = tf.keras.layers.Dense(1000, activation='relu')(x)
+  predictions = tf.keras.layers.Dense(num_classes, activation = 'softmax')(x)
+
+  model = tf.keras.models.Model(inputs=base_model.input, outputs=predictions)
+  return model
+
 class ResnetClassifier(tf.keras.Model):
-    def __init__(self, num_classes: int = 2, apply_augmentation: bool = False):
+    def __init__(self, num_classes: int = 2, apply_augmentation: bool = False, crop_size:int=256):
         super().__init__()
 
         self.apply_augmentation = apply_augmentation
@@ -44,17 +62,7 @@ class ResnetClassifier(tf.keras.Model):
                 tf.keras.layers.RandomContrast(0.2),
             ])
         
-        net = tf.keras.applications.resnet50.ResNet50(
-                include_top=False,
-                weights='imagenet',
-            ) 
-        self.resnet =  tf.keras.Sequential([
-            net,
-            tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(1000, activation='relu'),
-            tf.keras.layers.Dense(num_classes, activation='softmax')
-
-        ])
+        self.resnet = make_resnet()
     def call(self, x: tf.Tensor, training: bool = None) -> tf.Tensor:
         if self.apply_augmentation:
             x = self.aug(x, training = training)

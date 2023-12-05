@@ -6,7 +6,8 @@ import PIL.Image
 import pathlib
 from models import CustomClassifier, ResnetClassifier
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, f1_score, precision_recall_fscore_support, accuracy_score
+import numpy as np
 
 def train(args: Namespace):
     
@@ -20,7 +21,8 @@ def train(args: Namespace):
         subset="training",
         seed=123,
         image_size=(args.crop_size, args.crop_size),
-        batch_size=args.batch_size)
+        batch_size=args.batch_size,
+        label_mode='categorical',)
     
     val_ds = tf.keras.utils.image_dataset_from_directory(
         train_dir,
@@ -28,13 +30,15 @@ def train(args: Namespace):
         subset="validation",
         seed=123,
         image_size=(args.crop_size, args.crop_size),
-        batch_size=args.batch_size)
+        batch_size=args.batch_size,
+        label_mode='categorical',)
     
     test_ds = tf.keras.utils.image_dataset_from_directory(
         test_dir,
         seed=123,
         image_size=(args.crop_size, args.crop_size),
-        batch_size=args.batch_size)
+        batch_size=args.batch_size,
+        label_mode='categorical',)
     
     rescaling_norm = tf.keras.layers.Rescaling(1./255)
 
@@ -44,12 +48,12 @@ def train(args: Namespace):
 
     # INSTANTIATE MODEL
 
-    model = CustomClassifier(apply_augmentation=args.use_augmentation) if args.model == "custom" else ResnetClassifier(apply_augmentation=args.use_augmentation)
+    model = CustomClassifier(apply_augmentation=args.use_augmentation, crop_size=args.crop_size) if args.model == "custom" else ResnetClassifier(apply_augmentation=args.use_augmentation, crop_size= args.crop_size)
     
     #choose optimizer and loss
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate = args.lr),
-        loss=tf.losses.SparseCategoricalCrossentropy(from_logits=True),
+        loss="categorical_crossentropy",
         metrics=['accuracy'])
 
     plateau_callback = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.2,
@@ -97,30 +101,24 @@ def train(args: Namespace):
     plt.close()
 
     print("performing inference on the test set")
-    x, y = test_ds 
-    preds = model.predict(x, training=False)
+    x = np.concatenate([x for x, y in test_ds], axis=0)
+    y = np.concatenate([y for x, y in test_ds], axis=0) 
+      
+    preds = model.predict(x)
+    preds = tf.math.argmax(preds, 1)
 
-    acc = tf.keras.metrics.Accuracy()
-    acc = acc.update_state(preds,y)
+    acc = accuracy_score(y, preds)
+    f1 = f1_score(y, preds) 
+    precision, recall,_,__ = precision_recall_fscore_support(y, preds)
 
-    f1 = tf.keras.metrics.F1Score(num_classes=2)
-    f1 = f1.update_state(preds, y)
+    print("accuracy: ", acc)
+    print("f1: ", f1)
+    print("recall: ", recall)
+    print("precision: ", precision)
 
-    recall = tf.keras.metrics.Recall()
-    recall = recall.update_state(preds, y)
-
-    precision = tf.keras.metrics.Precision()
-    precision = precision.update_state(preds, y)
-
-    print("accuracy: ", acc.result().numpy())
-    print("f1: ", f1.result().numpy())
-    print("recall: ", recall.result().numpy())
-    print("precision: ", precision.result().numpy())
-
-    cm=confusion_matrix(y, preds, ["cats", "dogs"],)
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=model.classes_)
+    cm=confusion_matrix(y, preds)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["cats", "dogs"],)
     disp.plot()
     figpath = os.path.join(".", "figs", "confusion.png")
     plt.savefig(figpath, format= "png")
     plt.close()
-    
