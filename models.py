@@ -24,7 +24,7 @@ class CustomClassifier(tf.keras.Model):
             tf.keras.layers.MaxPooling2D(),
             tf.keras.layers.Flatten(),
             tf.keras.layers.Dense(128, activation='relu'),
-            tf.keras.layers.Dense(num_classes)
+            tf.keras.layers.Dense(num_classes, activation="softmax")
         ])
     
     def call(self, x: tf.Tensor, training: bool = None) -> tf.Tensor:
@@ -62,7 +62,7 @@ class ResnetClassifier(tf.keras.Model):
                 tf.keras.layers.RandomContrast(0.2),
             ])
         
-        self.resnet = make_resnet()
+        self.resnet = make_resnet(input_shape=(crop_size,crop_size,3))
     def call(self, x: tf.Tensor, training: bool = None) -> tf.Tensor:
         if self.apply_augmentation:
             x = self.aug(x, training = training)

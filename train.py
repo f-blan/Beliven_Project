@@ -45,6 +45,7 @@ def train(args: Namespace):
     #normalize in range [0,1]
     train_ds = train_ds.map(lambda x, y: (rescaling_norm(x), y))
     val_ds = val_ds.map(lambda x, y: (rescaling_norm(x), y))
+    test_ds = test_ds.map(lambda x, y: (rescaling_norm(x), y))
 
     # INSTANTIATE MODEL
 
@@ -103,6 +104,8 @@ def train(args: Namespace):
     print("performing inference on the test set")
     x = np.concatenate([x for x, y in test_ds], axis=0)
     y = np.concatenate([y for x, y in test_ds], axis=0) 
+
+    y=np.argmax(y,1)
       
     preds = model.predict(x)
     preds = tf.math.argmax(preds, 1)
