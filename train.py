@@ -4,7 +4,7 @@ import tensorflow_datasets as tfds
 import os
 import PIL.Image
 import pathlib
-from models import CustomClassifier, ResnetClassifier
+from models import CustomClassifier, ResnetClassifier, VGGClassifier
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, f1_score, precision_recall_fscore_support, accuracy_score
 import numpy as np
@@ -49,7 +49,7 @@ def train(args: Namespace):
 
     # INSTANTIATE MODEL
 
-    model = CustomClassifier(apply_augmentation=args.use_augmentation, crop_size=args.crop_size) if args.model == "custom" else ResnetClassifier(apply_augmentation=args.use_augmentation, crop_size= args.crop_size)
+    model = CustomClassifier(apply_augmentation=args.use_augmentation, crop_size=args.crop_size) if args.model == "custom" else VGGClassifier(apply_augmentation=args.use_augmentation, crop_size= args.crop_size)
     
     #choose optimizer and loss
     model.compile(
