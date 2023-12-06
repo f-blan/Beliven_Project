@@ -133,5 +133,3 @@ def train(args: Namespace):
     figpath = os.path.join(".", "figs", "confusion.png")
     plt.savefig(figpath, format= "png")
     plt.close()
-
-    model.eval

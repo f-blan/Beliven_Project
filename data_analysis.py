@@ -94,11 +94,3 @@ def data_analysis(args: Namespace):
   figpath = os.path.join(".", "figs", "aug_dogs.png")
   plt.savefig(figpath, format= "png")
   plt.close()
-
-  test_dir = pathlib.Path(args.test_dir)
-  test_ds = tf.keras.utils.image_dataset_from_directory(
-        test_dir,
-        seed=123,
-        image_size=(args.crop_size, args.crop_size),
-        batch_size=args.batch_size,
-        label_mode='categorical',)
