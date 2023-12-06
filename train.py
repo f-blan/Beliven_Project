@@ -102,8 +102,16 @@ def train(args: Namespace):
     plt.close()
 
     print("performing inference on the test set")
-    x = np.concatenate([x for x, y in test_ds], axis=0)
-    y = np.concatenate([y for x, y in test_ds], axis=0) 
+    
+    #separate test set into images and labels
+    x_test = []
+    y_test = []
+    for x, y in test_ds:
+        x_test.append(x)
+        y_test.append(y)
+    x = np.concatenate(x_test, axis = 0)
+    y = np.concatenate(y_test, axis = 0)
+
 
     y=np.argmax(y,1)
       
@@ -125,3 +133,5 @@ def train(args: Namespace):
     figpath = os.path.join(".", "figs", "confusion.png")
     plt.savefig(figpath, format= "png")
     plt.close()
+
+    model.eval

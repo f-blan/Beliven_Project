@@ -70,7 +70,7 @@ class ResnetClassifier(tf.keras.Model):
         return x
 
 def make_vgg(input_shape=(256,256,3), num_classes =2):
-    base_model = tf.keras.applications.VGG16(input_shape=[224,224,3] , weights='imagenet',include_top=False)
+    base_model = tf.keras.applications.VGG16(input_shape=input_shape , weights='imagenet',include_top=False)
     for layer in base_model.layers:
         layer.trainable = False
 
