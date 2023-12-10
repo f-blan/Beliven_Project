@@ -4,7 +4,7 @@ import tensorflow_datasets as tfds
 import os
 import PIL.Image
 import pathlib
-from models import CustomClassifier, ResnetClassifier, VGGClassifier
+from models import CustomClassifier, VGGClassifier
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, f1_score, precision_recall_fscore_support, accuracy_score
 import numpy as np

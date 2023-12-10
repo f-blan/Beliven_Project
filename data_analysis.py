@@ -20,22 +20,45 @@ def data_analysis(args: Namespace):
 
 
   #check size distribution
-  widths = []
-  heights = []
+  widths_cats = []
+  heights_cats = []
+  area_cats = []
+  widths_dogs = []
+  heights_dogs = []
+  area_dogs = []
 
-  for img_path in list(train_dir.glob('*/*.jpg')):
+  for img_path in list(train_dir.glob('cats/*.jpg')):
     img = PIL.Image.open(img_path)  
     wid, hgt = img.size 
-    widths.append(wid)
-    heights.append(hgt)
+    widths_cats.append(wid)
+    heights_cats.append(hgt)
+    area_cats.append(wid*hgt)
 
-  plt.scatter(widths, heights) 
+  for img_path in list(train_dir.glob('dogs/*.jpg')):
+    img = PIL.Image.open(img_path)  
+    wid, hgt = img.size 
+    widths_dogs.append(wid)
+    heights_dogs.append(hgt)
+    area_dogs.append(wid*hgt)
+
+  plt.scatter(widths_cats, heights_cats, color="red", label='Cats', alpha=0.6)
+  plt.scatter(widths_dogs, heights_dogs, color="blue", label='dogs', alpha=0.6) 
   plt.xlabel("width")
   plt.ylabel("height")
   plt.title("Image sizes")
+  plt.legend()
   figpath = os.path.join(".", "figs", "scatter.png")
   plt.savefig(figpath, format= "png")
   plt.close()
+
+  plt.hist(area_cats, label="cats", color="red", alpha= 0.6, bins=[i*10000 for i in range(0, 25)])
+  plt.hist(area_dogs, label="dogs", color="blue", alpha=0.6, bins=[i*10000 for i in range(0, 25)])
+  plt.title("Total are distribution (in pixels)")
+  plt.legend()
+  figpath = os.path.join(".", "figs", "histogram.png")
+  plt.savefig(figpath, format= "png")
+  plt.close()
+  
 
 
   #visualize some of the pictures
@@ -78,10 +101,22 @@ def data_analysis(args: Namespace):
   #show augmented images
   aug = tf.keras.Sequential([
           tf.keras.layers.RandomFlip("horizontal"),
-          tf.keras.layers.GaussianNoise(0.1),
-          tf.keras.layers.RandomBrightness(0.2),
-          tf.keras.layers.RandomContrast(0.2)
+          tf.keras.layers.RandomRotation(0.2),
+          tf.keras.layers.RandomContrast(0.2),
         ])
+
+  for images, labels in dogs_ds.take(1):
+    figpath = os.path.join(".", "figs", "normal_dog.png")
+    plt.imshow(images[0].numpy().astype("uint8"))
+    plt.savefig(figpath, format= "png")
+    plt.close()
+
+    aug_images = aug(images)
+    figpath = os.path.join(".", "figs", "aug_dog.png")
+    plt.imshow(aug_images[0].numpy().astype("uint8"))
+    plt.savefig(figpath, format= "png")
+    plt.close()
+    
 
   aug_ds = dogs_ds.map(lambda x, y: (aug(x, training=True), y))
   i=0
